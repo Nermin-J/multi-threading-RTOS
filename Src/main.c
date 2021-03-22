@@ -62,22 +62,21 @@ osThreadId Task1Handle;
 osThreadId Task2Handle;
 osThreadId Task3Handle;
 osThreadId Task4Handle;
-osMailQId redPosteHandle;
+osMailQId mailqueueHandle;
 osMutexId ADCmutexHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-ADC_ChannelConfTypeDef sConfig = { ADC_CHANNEL_0, 1, ADC_SAMPLETIME_3CYCLES};
+ADC_ChannelConfTypeDef sConfig = {ADC_CHANNEL_0, 1, ADC_SAMPLETIME_3CYCLES};
 
-
-
-typedef struct {
-	uint32_t source; 
-	float value; 
-	float average; 
-	float variance; 
-	uint32_t timestamp; 
-} Podaci;
+typedef struct
+{
+  uint32_t source;
+  float value;
+  float average;
+  float variance;
+  uint32_t timestamp;
+} data;
 
 /*
 	polje source identificira Task, polje value storira trenutnu vrijednost signala, polje average i
@@ -91,10 +90,10 @@ typedef struct {
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
-void StarttTask1(void const * argument);
-void StartTask2(void const * argument);
-void StartTask3(void const * argument);
-void StartTask4(void const * argument);
+void StarttTask1(void const *argument);
+void StartTask2(void const *argument);
+void StartTask3(void const *argument);
+void StartTask4(void const *argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -178,16 +177,16 @@ int main(void)
   /* USER CODE END RTOS_THREADS */
 
   /* Create the queue(s) */
-  /* definition and creation of redPoste */
-	osMailQDef(redPoste, 32, Podaci);
-	redPosteHandle = osMailCreate(osMailQ(redPoste), NULL);
+  /* definition and creation of mailqueue */
+  osMailQDef(mailqueue, 32, data);
+  mailqueueHandle = osMailCreate(osMailQ(mailqueue), NULL);
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
- 
+
   /* Start scheduler */
   osKernelStart();
-  
+
   /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
@@ -195,13 +194,11 @@ int main(void)
   while (1)
   {
 
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
-
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-
 }
 
 /**
@@ -214,13 +211,13 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct;
   RCC_ClkInitTypeDef RCC_ClkInitStruct;
 
-    /**Configure the main internal regulator output voltage 
+  /**Configure the main internal regulator output voltage 
     */
   __HAL_RCC_PWR_CLK_ENABLE();
 
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE2);
 
-    /**Initializes the CPU, AHB and APB busses clocks 
+  /**Initializes the CPU, AHB and APB busses clocks 
     */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -231,10 +228,9 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Initializes the CPU, AHB and APB busses clocks 
+  /**Initializes the CPU, AHB and APB busses clocks 
     */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
@@ -245,11 +241,11 @@ void SystemClock_Config(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure the Systick interrupt time 
+  /**Configure the Systick interrupt time 
     */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
+  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq() / 1000);
 
-    /**Configure the Systick 
+  /**Configure the Systick 
     */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
@@ -263,7 +259,7 @@ static void MX_ADC1_Init(void)
 
   ADC_ChannelConfTypeDef sConfig;
 
-    /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
+  /**Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion) 
     */
   hadc1.Instance = ADC1;
   hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
@@ -282,7 +278,7 @@ static void MX_ADC1_Init(void)
     _Error_Handler(__FILE__, __LINE__);
   }
 
-    /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
+  /**Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time. 
     */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = 1;
@@ -291,7 +287,6 @@ static void MX_ADC1_Init(void)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
-
 }
 
 /** Pinout Configuration
@@ -301,7 +296,6 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
-
 }
 
 /* USER CODE BEGIN 4 */
@@ -309,206 +303,205 @@ static void MX_GPIO_Init(void)
 /* USER CODE END 4 */
 
 /* StarttTask1 function */
-void StarttTask1(void const * argument)
+void StarttTask1(void const *argument)
 {
   /* USER CODE BEGIN 5 */
-  uint32_t vrijemePocetak, vrijemeKraj;
-	static uint32_t brojUzoraka1=0;
-	static float niz1[20];
-	float average; 
-	float variance;
-	Podaci* poruka;
+  uint32_t startTime, endTime;
+  static uint32_t numberOfSamples = 0;
+  static float measuredValues[20];
+  float average;
+  float variance;
+  data *message;
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
-		vrijemePocetak = osKernelSysTick();
-		
-		osMutexWait(ADCmutexHandle, osWaitForever);  //Pocetak kriticne sekcije
-		sConfig.Channel=ADC_CHANNEL_0;
-		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_PollForConversion(&hadc1, 10UL);
-		niz1[brojUzoraka1%20]=HAL_ADC_GetValue(&hadc1);
-		osMutexRelease(ADCmutexHandle);				//Kraj kriticne sekcije
-		brojUzoraka1++;
-		
-		//  Slanje poruke u mailqueue
-			poruka = (Podaci*)osMailAlloc(redPosteHandle, 0);
-			
-			if(poruka != NULL) 
-			{
-				poruka->source=1;
-				poruka->value=niz1[(brojUzoraka1%20)-1];
+    startTime = osKernelSysTick();
 
-				int uslov =(brojUzoraka1<20 ? brojUzoraka1 : 20); //Prevencija dobijanja nevalidnih podataka za average i variance u 
-																												//slucaju da jos uvijek nismo izvrsili 20 mjerenja (dok ne dobijemo prvih 20 
-																												//uzoraka na pocetku). U tu svrhu, brojac u petlji ide do " i<uslov " 
-				//izracun srednje vrijednosti
-				average=0;
-				for(int i=0 ; i<uslov; i++) average+=niz1[i];
-				average=average/uslov;
-				poruka->average=average; 
-			
-				//izracun varijanse
-				variance=0;
-				for(int i=0; i<uslov; i++) variance+=((niz1[i]-average)*(niz1[i]-average));
-				variance=variance/uslov;
-				poruka->variance=variance;
-				
-				poruka->timestamp=osKernelSysTick();
-				osMailPut(redPosteHandle, poruka);
-			} 
-			
-			vrijemeKraj = osKernelSysTick();
-			osDelay(30-(vrijemeKraj-vrijemePocetak));		
-		}
-		  
-  /* USER CODE END 5 */ 
+    osMutexWait(ADCmutexHandle, osWaitForever); // Start of the critical section -> use mutex
+    sConfig.Channel = ADC_CHANNEL_0;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 10UL);
+    measuredValues[numberOfSamples % 20] = HAL_ADC_GetValue(&hadc1);
+    osMutexRelease(ADCmutexHandle); // End of the critical section
+    numberOfSamples++;
+
+    // Send message in mailqueue
+    message = (data *)osMailAlloc(mailqueueHandle, 0);
+
+    if (message != NULL)
+    {
+      message->source = 1;
+      message->value = measuredValues[(numberOfSamples % 20) - 1];
+
+      int condition = (numberOfSamples < 20 ? numberOfSamples : 20);
+
+      // Calculate average value
+      average = 0;
+      for (int i = 0; i < condition; i++)
+        average += measuredValues[i];
+      average = average / condition;
+      message->average = average;
+
+      // Calculate variance
+      variance = 0;
+      for (int i = 0; i < condition; i++)
+        variance += ((measuredValues[i] - average) * (measuredValues[i] - average));
+      variance = variance / condition;
+      message->variance = variance;
+
+      message->timestamp = osKernelSysTick();
+      osMailPut(mailqueueHandle, message);
+    }
+
+    endTime = osKernelSysTick();
+    osDelay(30 - (endTime - startTime));
+  }
+
+  /* USER CODE END 5 */
 }
 
 /* StartTask2 function */
-void StartTask2(void const * argument)
+void StartTask2(void const *argument)
 {
   /* USER CODE BEGIN StartTask2 */
-  uint32_t vrijemePocetak, vrijemeKraj;
-	static uint32_t brojUzoraka2=0;
-	static float niz2[20];
-	float average; 
-	float variance;
-	Podaci* poruka;
+  uint32_t startTime, endTime;
+  static uint32_t numberOfSamples = 0;
+  static float measuredValues[20];
+  float average;
+  float variance;
+  data *message;
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
-		vrijemePocetak = osKernelSysTick();
-		
-		osMutexWait(ADCmutexHandle, osWaitForever);  //Pocetak kriticne sekcije
-		sConfig.Channel=ADC_CHANNEL_1;
-		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_PollForConversion(&hadc1, 10UL);
-		niz2[brojUzoraka2%20]=HAL_ADC_GetValue(&hadc1);
-		osMutexRelease(ADCmutexHandle);				//Kraj kriticne sekcije
-		brojUzoraka2++;
-		
-		//  Slanje poruke u mailqueue
-			poruka = (Podaci*)osMailAlloc(redPosteHandle, 0);
-			
-			if(poruka != NULL) 
-			{
-				poruka->source=2;
-				poruka->value=niz2[(brojUzoraka2%20)-1];
+    startTime = osKernelSysTick();
 
-				int uslov =(brojUzoraka2<20 ? brojUzoraka2 : 20); //Prevencija dobijanja nevalidnih podataka za average i variance u 
-																												//slucaju da jos uvijek nismo izvrsili 20 mjerenja (dok ne dobijemo prvih 20 
-																												//uzoraka na pocetku). U tu svrhu, brojac u petlji ide do " i<uslov " 
-				//izracun srednje vrijednosti
-				average=0;
-				for(int i=0 ; i<uslov; i++) average+=niz2[i];
-				average=average/uslov;
-				poruka->average=average; 
-			
-				//izracun varijanse
-				variance=0;
-				for(int i=0; i<uslov; i++) variance+=((niz2[i]-average)*(niz2[i]-average));
-				variance=variance/uslov;
-				poruka->variance=variance;
-				
-				poruka->timestamp=osKernelSysTick();
-				osMailPut(redPosteHandle, poruka);
-			} 
-			
-			vrijemeKraj = osKernelSysTick();
-			osDelay(40-(vrijemeKraj-vrijemePocetak));		
-		}
+    osMutexWait(ADCmutexHandle, osWaitForever); // Start of the critical section -> use mutex
+    sConfig.Channel = ADC_CHANNEL_1;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 10UL);
+    measuredValues[numberOfSamples % 20] = HAL_ADC_GetValue(&hadc1);
+    osMutexRelease(ADCmutexHandle); // End of the critical section
+    numberOfSamples++;
+
+    // Send message in mailqueue
+    message = (data *)osMailAlloc(mailqueueHandle, 0);
+
+    if (message != NULL)
+    {
+      message->source = 2;
+      message->value = measuredValues[(numberOfSamples % 20) - 1];
+
+      int condition = (numberOfSamples < 20 ? numberOfSamples : 20);
+
+      // calculate average value
+      average = 0;
+      for (int i = 0; i < condition; i++)
+        average += measuredValues[i];
+      average = average / condition;
+      message->average = average;
+
+      // calculate variance
+      variance = 0;
+      for (int i = 0; i < condition; i++)
+        variance += ((measuredValues[i] - average) * (measuredValues[i] - average));
+      variance = variance / condition;
+      message->variance = variance;
+
+      message->timestamp = osKernelSysTick();
+      osMailPut(mailqueueHandle, message);
+    }
+
+    endTime = osKernelSysTick();
+    osDelay(40 - (endTime - startTime));
+  }
 
   /* USER CODE END StartTask2 */
 }
 
 /* StartTask3 function */
-void StartTask3(void const * argument)
+void StartTask3(void const *argument)
 {
   /* USER CODE BEGIN StartTask3 */
-  uint32_t vrijemePocetak, vrijemeKraj;
-	static uint32_t brojUzoraka3=0;
-	static float niz3[20];
-	float average; 
-	float variance;
-	Podaci* poruka;
+  uint32_t startTime, endTime;
+  static uint32_t numberOfSamples = 0;
+  static float measuredValues[20];
+  float average;
+  float variance;
+  data *message;
   /* Infinite loop */
-  for(;;)
+  for (;;)
   {
-		vrijemePocetak = osKernelSysTick();
-		
-		osMutexWait(ADCmutexHandle, osWaitForever);  //Pocetak kriticne sekcije
-		sConfig.Channel=ADC_CHANNEL_2;
-		HAL_ADC_ConfigChannel(&hadc1, &sConfig);
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_PollForConversion(&hadc1, 10UL);
-		niz3[brojUzoraka3%20]=HAL_ADC_GetValue(&hadc1);
-		osMutexRelease(ADCmutexHandle);				//Kraj kriticne sekcije
-		brojUzoraka3++;
-		
-		//  Slanje poruke u mailqueue
-			poruka = (Podaci*)osMailAlloc(redPosteHandle, 0);
-			
-			if(poruka != NULL) 
-			{
-				poruka->source=3;
-				poruka->value=niz3[(brojUzoraka3%20)-1];
+    startTime = osKernelSysTick();
 
-				int uslov =(brojUzoraka3<20 ? brojUzoraka3 : 20); //Prevencija dobijanja nevalidnih podataka za average i variance u 
-																												//slucaju da jos uvijek nismo izvrsili 20 mjerenja (dok ne dobijemo prvih 20 
-																												//uzoraka na pocetku). U tu svrhu, brojac u petlji ide do " i<uslov " 
-				//izracun srednje vrijednosti
-				average=0;
-				for(int i=0 ; i<uslov; i++) average+=niz3[i];
-				average=average/uslov;
-				poruka->average=average; 
-			
-				//izracun varijanse
-				variance=0;
-				for(int i=0; i<uslov; i++) variance+=((niz3[i]-average)*(niz3[i]-average));
-				variance=variance/uslov;
-				poruka->variance=variance;
-				
-				poruka->timestamp=osKernelSysTick();
-				osMailPut(redPosteHandle, poruka);
-			} 
-			
-			vrijemeKraj = osKernelSysTick();
-			osDelay(50-(vrijemeKraj-vrijemePocetak));		
-		}
+    osMutexWait(ADCmutexHandle, osWaitForever); // Start of the critical section -> use mutex
+    sConfig.Channel = ADC_CHANNEL_2;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 10UL);
+    measuredValues[numberOfSamples % 20] = HAL_ADC_GetValue(&hadc1);
+    osMutexRelease(ADCmutexHandle); // End of the critical section
+    numberOfSamples++;
+
+    // Send message in mailqueue
+    message = (data *)osMailAlloc(mailqueueHandle, 0);
+
+    if (message != NULL)
+    {
+      message->source = 3;
+      message->value = measuredValues[(numberOfSamples % 20) - 1];
+
+      int condition = (numberOfSamples < 20 ? numberOfSamples : 20);
+      
+      // Calculate average value
+      average = 0;
+      for (int i = 0; i < condition; i++)
+        average += measuredValues[i];
+      average = average / condition;
+      message->average = average;
+
+      // Calculate variance
+      variance = 0;
+      for (int i = 0; i < condition; i++)
+        variance += ((measuredValues[i] - average) * (measuredValues[i] - average));
+      variance = variance / condition;
+      message->variance = variance;
+
+      message->timestamp = osKernelSysTick();
+      osMailPut(mailqueueHandle, message);
+    }
+
+    endTime = osKernelSysTick();
+    osDelay(50 - (endTime - startTime));
+  }
 
   /* USER CODE END StartTask3 */
 }
 
 /* StartTask4 function */
-void StartTask4(void const * argument)
+void StartTask4(void const *argument)
 {
   /* USER CODE BEGIN StartTask4 */
-  Podaci  *poruka;
-	osEvent rezultat;
-	uint32_t  source, timestamp; 
-	float value, average, variance; 
-	/* Infinite loop */	
-  for(;;)
+  data *message;
+  osEvent result;
+  uint32_t source, timestamp;
+  float value, average, variance;
+  /* Infinite loop */
+  for (;;)
   {
-		
-		// Do communication task
-		// Get message from the queue
-		  
-		rezultat=osMailGet(redPosteHandle,osWaitForever);
-		poruka=rezultat.value.p;
-		
-		source=poruka->source;
-		value=poruka->value;
-		average=poruka->average;
-		variance=poruka->variance;
-		timestamp=poruka->timestamp;
-		
-		osMailFree(redPosteHandle, poruka);
-  /* USER CODE END StartTask4 */
-	}
+    result = osMailGet(mailqueueHandle, osWaitForever);
+    message = result.value.p;
+
+    source = message->source;
+    value = message->value;
+    average = message->average;
+    variance = message->variance;
+    timestamp = message->timestamp;
+
+    osMailFree(mailqueueHandle, message);
+    /* USER CODE END StartTask4 */
+  }
 }
 /**
   * @brief  Period elapsed callback in non blocking mode
@@ -523,7 +516,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
+  if (htim->Instance == TIM1)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -541,13 +535,13 @@ void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  while(1)
+  while (1)
   {
   }
   /* USER CODE END Error_Handler_Debug */
 }
 
-#ifdef  USE_FULL_ASSERT
+#ifdef USE_FULL_ASSERT
 /**
   * @brief  Reports the name of the source file and the source line number
   *         where the assert_param error has occurred.
@@ -555,8 +549,8 @@ void _Error_Handler(char *file, int line)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
-{ 
+void assert_failed(uint8_t *file, uint32_t line)
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
